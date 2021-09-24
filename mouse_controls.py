@@ -31,17 +31,36 @@ class MouseController:
             
             return (False,(0,0))
 
-    def __init__(self,view,scale = 0.80,first_position = ACTION_MOVE,second_position = ACTION_LEFT_CLICK,third_position = ACTION_DRAG,fourth_position = ACTION_RIGHT_CLICK,mouse_pause=0.1,detection_conf=0.5,track_conf=0.55,track_pos=8):
-        self._view = view
+    def __init__(self,mouse_pause=0.1,detection_conf=0.5,track_conf=0.55,track_pos=8):
+        
         pyautogui.PAUSE = mouse_pause
-        hd = HandDetector(view=self._view,max_hands=1,detection_conf=detection_conf,track_conf=track_conf)
-        hd.display_hand(highlight_pos=track_pos, connect_lines=False)
+        self._hd = HandDetector(max_hands=1,detection_conf=detection_conf,track_conf=track_conf)
+            
+        
+    def get_view(self):
+        return self._view
+    def get_action(self, action):
+        if action == self.ACTION_RIGHT_CLICK:
+            self._right_click()
+        elif action == self.ACTION_LEFT_CLICK:
+            self._left_click()
+        elif action == self.ACTION_DRAG:
+            self._drag_pointer()
+        elif action == self.ACTION_MOVE:
+            self._move_pointer()
+        else:
+            self._move=False
+            pass
+    def set_view(self,view,scale = 0.80,first_position = ACTION_MOVE,second_position = ACTION_LEFT_CLICK,third_position = ACTION_DRAG,fourth_position = ACTION_RIGHT_CLICK,track_pos=8):
+        self._hd.set_view(view)
+        self._view=view
+        self._hd.display_hand(highlight_pos=track_pos, connect_lines=False)
         
 
         rect_pt_1= (int(view.shape[1]*(1-scale)),int(view.shape[0]*(1-scale)))
         rect_pt_2= (int(view.shape[1]*(scale)),int(view.shape[0]*(scale)))
         cv.rectangle(self._view, rect_pt_1 ,rect_pt_2,(0,255,0),10)
-        lms = hd.get_results(ratio=True)
+        lms = self._hd.get_results(ratio=True)
         r_analysis = ResultAnalysis(lms)
         if(r_analysis.is_ready()):
             cv.putText(self._view, "Position:"+ str(r_analysis.get_position()), (20,20),cv.FONT_HERSHEY_TRIPLEX,1,(0,255,0))
@@ -60,26 +79,10 @@ class MouseController:
             if r_analysis.get_position() == 4:
                 self.get_action(fourth_position)
             if self._move:
-                move =is_in[0]   
+                self._move =is_in[0]   
             if(self._move):
                 pyautogui.moveTo((1-(is_in[1][0]))*self._dim_x,(is_in[1][1])*self._dim_y,0.001)
-        
-        
-    def get_view(self):
-        return self._view
-    def get_action(self, action):
-        if action == self.ACTION_RIGHT_CLICK:
-            self._right_click()
-        elif action == self.ACTION_LEFT_CLICK:
-            self._left_click()
-        elif action == self.ACTION_DRAG:
-            self._drag_pointer()
-        elif action == self.ACTION_MOVE:
-            self._move_pointer()
-        else:
-            self._move=False
-            pass
-
+            
     def _move_pointer(self):
         pyautogui.mouseUp()
         self._move=True
@@ -104,15 +107,12 @@ def main():
     move = False
     capture.set(cv.CAP_PROP_FRAME_HEIGHT,dim_y)
     capture.set(cv.CAP_PROP_FRAME_WIDTH,dim_x)
+    mouse_controller=MouseController(mouse_pause=0.05)
     while True:
         success, view= capture.read()
-        
-        
-                        
-        
         cv.putText(view,"Frame Rate: "+str(1//(time.time()-time_prev)),(20,50),cv.FONT_HERSHEY_TRIPLEX,1,(0,255,0))
         time_prev=time.time()
-        mouse_controller=MouseController(view)
+        mouse_controller.set_view(view)
         view = mouse_controller.get_view()
         
         cv.imshow("Test", view)    

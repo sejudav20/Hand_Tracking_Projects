@@ -6,17 +6,17 @@ from hand_detector import HandDetector
 from hand_detector import ResultAnalysis
 import random
 class _Node:
-    name=""
-    next=None
+    
     def __init__(self,name):
         self.name = name
-        self.next = next
+        self.next = None
     
 
 class _order:
     root = _Node("Rock")
     root.next=_Node("Scissors")
     root.next.next=_Node("Paper")
+    root.next.next=root
     def __init__(self):
         pass
     def check(self,computer_decision,player_decision):
@@ -24,8 +24,9 @@ class _order:
             return "Draw"
         node=self.root
         while(node.name != computer_decision):
-            node= node.next
-        if node.next.name == player_decision:
+            node = node.next
+        node_next=node.next
+        if  node_next.name == player_decision:
             return "Computer Won"
         else:
             return "You Won"
@@ -36,8 +37,7 @@ def main():
     
     time_prev=0
     time_start=time.time()
-    print("Welcome to rock paper scissors press 's' and show rock paper or scissors press 'q' to quit")    
-
+    
     frame_count = 0
     examined={"Rock":0,"Paper":0,"Scissors":0}
     on_examine=False
@@ -58,7 +58,7 @@ def main():
         rps=""
         if on_examine:
             rps = "Examining"
-            print("examining")
+            
             if r_analysis.is_ready():
                 finger_num=r_analysis.get_position()
                 
